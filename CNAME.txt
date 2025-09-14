@@ -1,0 +1,11 @@
+# CNAME 설정
+type = CNAME
+host = www
+points to (value) = kibeumkwon.github.io
+ttl = 1 hour
+
+# IP 주소 설정
+type = A
+host = @
+points to (value) = http://hpolicy.korea.ac.kr/  # APEX 도메인
+ttl = 1 hour
