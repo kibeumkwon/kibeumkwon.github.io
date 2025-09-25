@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concept Mapping and Card Sorting Tool</title>
+    <title>Concept Mapping and Card Sorting Tool (v5)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
@@ -24,6 +24,24 @@
             padding: 20px;
             margin-bottom: 20px;
             border-radius: 5px;
+        }
+        .instructions h4 {
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        .instructions ul {
+            margin-top: 0;
+            padding-left: 20px;
+        }
+        .final-notice {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            color: #d9534f;
         }
         .main-content {
             display: flex;
@@ -52,11 +70,26 @@
             justify-content: space-between;
             align-items: center;
         }
-        .grouped-statement .statement-text {
-            cursor: pointer;
+        .statement-text {
+            flex-grow: 1;
         }
-        .grouped-statement .statement-text:hover {
-            text-decoration: line-through;
+        .statement-controls {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+        .statement-controls select {
+            padding: 2px;
+        }
+        .remove-btn {
+            margin-left: 8px;
+            padding: 3px 8px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
         .group {
             border: 1px solid #ccc;
@@ -77,20 +110,19 @@
             border: 1px solid #ccc;
             border-radius: 3px;
         }
-        .similarity-rating {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .delete-group-btn {
+            padding: 5px 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
         .statement-list {
             min-height: 50px;
             background: #e9e9e9;
             padding: 10px;
             border-radius: 3px;
-        }
-        .importance-rating {
-            margin-left: 15px;
-            font-size: 0.9em;
         }
         .dragging {
             opacity: 0.5;
@@ -141,78 +173,73 @@
     <div class="container">
         <div class="instructions">
             <h2>Concept Mapping Task</h2>
-            <p>Drag statements from the "Statement Pool" into groups on the right. For each statement in a group, please rate its importance within that group. To remove a statement from a group, simply click on its text.</p>
+            <p>다음 지침에 따라서, 제시한 총 51개의 진술문을 활용하여 유사한 의미를 지닌 진술문을 분류하고, 각 그룹별 제목을 정해주시면 됩니다.</p>
+            
+            <h4>① 유사한 진술문 분류하기</h4>
+            <ul>
+                <li>총 51개 진술문 중, 의미가 유사하거나 같은 범주라고 생각되는 진술문들을 오른쪽의 그룹으로 묶어주세요.</li>
+                <li>그룹의 개수는 원하는 만큼 만드실 수 있습니다.</li>
+                <li>단, 한 그룹은 <strong>최소 2개 이상의 진술문</strong>으로 구성되어야 하며, 하나의 그룹에 16개 이상의 진술문이 포함되지 않아야 합니다.</li>
+                <li>분류가 끝났을 때 <strong>남는 진술문이 없도록</strong> 모든 진술문을 그룹에 포함시켜 주세요.</li>
+            </ul>
+            
+            <h4>② 각 그룹의 제목 정하기</h4>
+            <ul>
+                <li>분류한 각 그룹을 가장 잘 설명할 수 있는 제목을 적어주세요.</li>
+            </ul>
+
+            <h4>③ 중요도 평정</h4>
+            <ul>
+                <li>그룹 내 해당 진술문이 얼마나 중요한지 1 ~ 5 점 척도로 평가해 주세요.</li>
+            </ul>
+
+            <div class="final-notice">
+                ★ 작성을 완료하신 후, <strong>꼭</strong> 하단의 엑셀 파일 추출 버튼을 눌러서 다운 받으신 다음에 파일 공유 부탁드립니다. ★
+            </div>
         </div>
+
 
         <div class="main-content">
             <div id="statement-pool">
-                <h3>Statement Pool</h3>
+                <h3>진술문 목록(총 51개)</h3>
                 </div>
             <div id="groups-container">
-                <h3>Your Groups</h3>
-                <button id="add-group-btn">Add New Group</button>
+                <h3>그룹 생성</h3>
+                <button id="add-group-btn">새로운 그룹 추가</button>
             </div>
         </div>
 
         <div class="participant-form">
-            <h3>Participant Information</h3>
+            <h3>참여자 정보</h3>
             <div class="form-grid">
-                <div>
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name">
-                </div>
-                <div>
-                    <label for="affiliation">Affiliation:</label>
-                    <input type="text" id="affiliation" name="affiliation">
-                </div>
-                <div>
-                    <label for="service-duration">Years at current institution:</label>
-                    <input type="text" id="service-duration" name="service-duration">
-                </div>
-                <div>
-                    <label for="birth-year">Birth Year:</label>
-                    <input type="number" id="birth-year" name="birth-year">
-                </div>
-                 <div>
-                    <label for="contact">Contact:</label>
-                    <input type="text" id="contact" name="contact">
-                </div>
-                <div>
-                    <label for="position">Position:</label>
-                    <input type="text" id="position" name="position">
-                </div>
-                 <div>
-                    <label for="major">University Major:</label>
-                    <input type="text" id="major" name="major">
-                </div>
+                <div><label for="name">성명:</label><input type="text" id="name" name="name"></div>
+                <div><label for="affiliation">소속기관명:</label><input type="text" id="affiliation" name="affiliation"></div>
+                <div><label for="service-duration">현기관에서의 근무 기간:</label><input type="text" id="service-duration" name="service-duration"></div>
+                <div><label for="birth-year">생년월일:</label><input type="number" id="birth-year" name="birth-year"></div>
+                <div><label for="contact">연락처(휴대전화):</label><input type="text" id="contact" name="contact"></div>
+                <div><label for="position">직급:</label><input type="text" id="position" name="position"></div>
+                <div><label for="major">전공 분야:</label><input type="text" id="major" name="major"></div>
             </div>
         </div>
         
-        <button id="export-btn">Export Results to Excel</button>
+        <button id="export-btn">엑셀파일로 추출</button>
     </div>
 
     <script>
         // --- DATA ---
         const statements = [
-            { id: 1, text: "Statement 1: The city should provide more accessible healthcare services." },
-            { id: 2, text: "Statement 2: Technology integration in health monitoring is crucial." },
-            { id: 3, text: "Statement 3: Green spaces and parks contribute to mental well-being." },
-            { id: 4, text: "Statement 4: Health education programs in schools are important." },
-            { id: 5, text: "Statement 5: Affordable healthy food options should be available to everyone." },
-            { id: 6, text: "Statement 6: A robust public transportation system can encourage physical activity." },
-            { id: 7, text: "Statement 7: Community gardens promote both nutrition and social interaction." },
-            { id: 8, text: "Statement 8: Wearable devices can help in early detection of health issues." },
-            { id: 9, text: "Statement 9: Mental health support needs to be destigmatized and accessible." },
-            { id: 10, text: "Statement 10: The local government should partner with private tech companies for health solutions." }
+            { id: 1, text: "1. 광주동구 스마트 건강도시는 참여하는 동구 구민을 위한 것이다." }, { id: 2, text: "2. 광주동구 스마트 건강도시는 스마트 기기를 이용해 예측하고 행동할 수 있는 곳이다." }, { id: 3, text: "3. 광주동구 스마트 건강도시는 자연이 치유하는 것이다." }, { id: 4, text: "4. 광주동구 스마트 건강도시는 스마트 기술을 통한 건강혁신을 촉진하는 것이다." }, { id: 5, text: "5. 광주동구 스마트 건강도시는 AI 디지털 헬스케어를 포함하는 것이다." }, { id: 6, text: "6. 광주동구 스마트 건강도시는 ICT 기반으로 건강을 관리하는 것이다." }, { id: 7, text: "7. 광주동구 스마트 건강도시는 독거가구를 관리할 수 있는 시스템(AI 활용) (독고사, 외로움 등 예방) 이다." }, { id: 8, text: "8. 광주동구 스마트 건강도시는 도로 블랙홀 등 사전 예측으로 사고 예방 시스템(예. \"땅꺼짐이 ㅇㅇ지역에 예측되니 그 지역 지날 때는 주의를 요한다\" 등) 이다." }, { id: 9, text: "9. 광주동구 스마트 건강도시는 스마트기기에 익숙하지 않은 사람들이 사용할 수 있는 간편기기 개발해 간단한 교육으로 사용할 수 있도록 하는 것이다." }, { id: 10, text: "10. 광주동구 스마트 건강도시는 건강회복력이 풍부한 곳이다." }, { id: 11, text: "11. 광주동구 스마트 건강도시는 개인 맞춤형(가족) 이다." }, { id: 12, text: "12. 광주동구 스마트 건강도시는 사회적 접근 용이 이다." }, { id: 13, text: "13. 광주동구 스마트 건강도시는 기후, 환경, 건강의 지속가능성을 확보하는 것이다." }, { id: 14, text: "14. 광주동구 스마트 건강도시는 공동체 회복이다." }, { id: 15, text: "15. 광주동구 스마트 건강도시는 지역문화와 함께 하는 것이다." }, { id: 16, text: "16. 광주동구 스마트 건강도시는 자연과 함께 하는 것이다." }, { id: 17, text: "17. 광주동구 스마트 건강도시는 연령에 상관없이 돌봄을 제공받는 것이다." }, { id: 18, text: "18. 광주동구 스마트 건강도시는 생활에 필요영역별 시스템으로 작동되는 곳이다." }, { id: 19, text: "19. 광주동구 스마트 건강도시는 스마트와 건강을 포괄하는 개념이다." }, { id: 20, text: "20. 광주동구 스마트 건강도시는 건강으로 가는 기회이다." }, { id: 21, text: "21. 광주동구 스마트 건강도시는 도시 안에서 환경, 복지, 건강, 의료 등 생활과 밀접한 것들이 해결되는 도시이다." }, { id: 22, text: "22. 광주동구 스마트 건강도시는 시간과 장소의 제약을 받지 않는 돌봄을 포함하는 것이다." }, { id: 23, text: "23. 광주동구 스마트 건강도시는 모두가 건강을 스스로 관리할 수 있는 도시이다." }, { id: 24, text: "24. 광주동구 스마트 건강도시는 질환의 경중정도에 상관없이 돌봄을 제공하는 것이다." }, { id: 25, text: "25. 광주동구 스마트 건강도시는 질병 예방 중심 서비스이다." }, { id: 26, text: "26. 광주동구 스마트 건강도시는 소득에 상관없이 돌봄을 제공받는 것이다." }, { id: 27, text: "27. 광주동구 스마트 건강도시는 사회적 격차 최소화이다." }, { id: 28, text: "28. 광주동구 스마트 건강도시는 보건의료서비스(급성기·회복기·만성 시스템) 체계화를 통해 환자의 접근성이 향상된 도시이다." }, { id: 29, text: "29. 광주동구 스마트 건강도시는 취약계층(고령층) 중심 공간환경이 조성된 곳이다." }, { id: 30, text: "30. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 도시이다." }, { id: 31, text: "31. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 곳이다." }, { id: 32, text: "32. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 33, text: "33. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 34, text: "34. 광주동구 스마트 건강도시는 교통의 연결성과 접근성이 좋은 곳이다." }, { id: 35, text: "35. 광주동구 스마트 건강도시는 지역사회가 가진 물리적 자원과 돌봄제도를 유기적으로 연결하는 곳이다." }, { id: 36, text: "36. 광주동구 스마트 건강도시는 복지 제도의 중복 없이 빈틈을 채워나가는 도시이다." }, { id: 37, text: "37. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 38, text: "38. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 39, text: "39. 광주동구 스마트 건강도시는 실천 가능한 전략을 중시하며 발전하는 것이다." }, { id: 40, text: "40. 광주동구 스마트 건강도시는 기후위기에 대응해 재해 예방과 주민 안전을 최우선적으로 고려하며, 회복력 있는 물리적 환경을 구축하는 곳이다." }, { id: 41, text: "41. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 42, text: "42. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 43, text: "43. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 44, text: "44. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 45, text: "45. 광주동구 스마트 건강도시는 가정 내 환경과 돌봄 여건을 보완해 안전한 재가생활이 가능한 도시이다." }, { id: 46, text: "46. 광주동구 스마트 건강도시는 고령층 등 디지털 취약계층을 위해 디지털 기술의 진입장벽이 최소화된 공간이다." }, { id: 47, text: "47. 광주동구 스마트 건강도시는 민간기업이 손쉽게 참여하고 협력할 수 있는 공공 시스템이 구축된 도시이다." }, { id: 48, text: "48. 광주동구 스마트 건강도시는 건강 복합적인 영역을 고려하여 주민 건강을 지키는 친환경적 공간이다." }, { id: 49, text: "49. 광주동구 스마트 건강도시는 기후 적응 인프라 확충을 통해 건강을 통합적으로 고려하는 도시이다." }, { id: 50, text: "50. 광주동구 스마트 건강도시는 이용자 중심 맞춤형 교통 복지를 실현하는 체계이다." }, { id: 51, text: "51. 광주동구 스마트 건강도시는 예산 문제 등 어려움을 극복하며 건강도시 사업의 연결성이 유지되는 도시이다." }
         ];
 
-        // --- INITIALIZATION ---
+        // --- ELEMENTS ---
         const statementPool = document.getElementById('statement-pool');
         const groupsContainer = document.getElementById('groups-container');
         const addGroupBtn = document.getElementById('add-group-btn');
         const exportBtn = document.getElementById('export-btn');
         let groupCounter = 0;
+        let draggedItem = null;
 
+        // --- FUNCTIONS ---
         function renderStatements() {
             statements.forEach(statement => {
                 const div = document.createElement('div');
@@ -220,102 +247,41 @@
                 div.draggable = true;
                 div.id = `statement-${statement.id}`;
                 div.dataset.id = statement.id;
-                div.innerHTML = `<span class="statement-text">${statement.text}</span>`;
+                const textSpan = document.createElement('span');
+                textSpan.className = 'statement-text';
+                textSpan.innerText = statement.text;
+                div.appendChild(textSpan);
+                const placeholder = document.createElement('div');
+                placeholder.id = `placeholder-${statement.id}`;
+                placeholder.style.display = "none";
+                statementPool.appendChild(placeholder);
                 statementPool.appendChild(div);
             });
         }
         
-        function addImportanceRating(statementElement) {
-            const existingRating = statementElement.querySelector('.importance-rating');
-            if (!existingRating) {
-                const ratingDiv = document.createElement('div');
-                ratingDiv.className = 'importance-rating';
-                ratingDiv.innerHTML = `
-                    <select class="importance-select">
-                        <option value="1">1 (Very Unimportant)</option>
-                        <option value="2">2 (Unimportant)</option>
-                        <option value="3" selected>3 (Neutral)</option>
-                        <option value="4">4 (Important)</option>
-                        <option value="5">5 (Very Important)</option>
-                    </select>
-                `;
-                statementElement.appendChild(ratingDiv);
-                statementElement.classList.add('grouped-statement');
-            }
+        function addStatementControls(statementElement) {
+            if (statementElement.querySelector('.statement-controls')) return;
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'statement-controls';
+            controlsDiv.innerHTML = `
+                <select>
+                    <option value="" disabled selected>중요도 선택</option>
+                    <option value="1">1: 전혀 중요하지 않음</option>
+                    <option value="2">2: 중요하지 않음</option>
+                    <option value="3">3: 보통</option>
+                    <option value="4">4: 중요함</option>
+                    <option value="5">5: 매우 중요함</option>
+                </select>
+                <button class="remove-btn">제거</button>
+            `;
+            statementElement.appendChild(controlsDiv);
         }
 
-        function removeImportanceRating(statementElement) {
-            const ratingDiv = statementElement.querySelector('.importance-rating');
-            if (ratingDiv) {
-                statementElement.removeChild(ratingDiv);
-                statementElement.classList.remove('grouped-statement');
-            }
+        function removeStatementControls(statementElement) {
+            const controlsDiv = statementElement.querySelector('.statement-controls');
+            if (controlsDiv) statementElement.removeChild(controlsDiv);
         }
-
-
-        // --- EVENT LISTENERS ---
-        let draggedItem = null;
-
-        document.addEventListener('dragstart', (e) => {
-            if (e.target.classList.contains('statement')) {
-                draggedItem = e.target;
-                setTimeout(() => {
-                    e.target.style.display = 'none';
-                }, 0);
-            }
-        });
-
-        document.addEventListener('dragend', (e) => {
-            if (draggedItem) {
-                setTimeout(() => {
-                    draggedItem.style.display = 'flex';
-                    draggedItem = null;
-                }, 0);
-            }
-        });
-
-        document.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            const dropTarget = e.target.closest('.statement-list, #statement-pool');
-             if (dropTarget) {
-                dropTarget.classList.add('drag-over');
-            }
-        });
         
-        document.addEventListener('dragleave', (e) => {
-            const dropTarget = e.target.closest('.statement-list, #statement-pool');
-             if (dropTarget) {
-                dropTarget.classList.remove('drag-over');
-            }
-        });
-
-        document.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const dropTarget = e.target.closest('.statement-list, #statement-pool');
-            if (dropTarget && draggedItem) {
-                dropTarget.appendChild(draggedItem);
-                dropTarget.classList.remove('drag-over');
-
-                if (dropTarget.classList.contains('statement-list')) {
-                    addImportanceRating(draggedItem);
-                } else if (dropTarget.id === 'statement-pool') {
-                    removeImportanceRating(draggedItem);
-                }
-            }
-        });
-        
-        // New listener for removing statements from a group
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('statement-text')) {
-                const statementElement = e.target.closest('.statement');
-                if (statementElement && statementElement.closest('.statement-list')) {
-                    removeImportanceRating(statementElement);
-                    statementPool.appendChild(statementElement);
-                }
-            }
-        });
-
-        // --- GROUP MANAGEMENT ---
         function createGroup() {
             groupCounter++;
             const groupDiv = document.createElement('div');
@@ -323,72 +289,176 @@
             groupDiv.id = `group-${groupCounter}`;
             groupDiv.innerHTML = `
                 <div class="group-header">
-                    <input type="text" class="group-title" placeholder="Group ${groupCounter} Title">
-                    <div class="similarity-rating">
-                        <span>Similarity:</span>
-                        <select class="similarity-select">
-                            <option value="1">1 (Not Similar)</option>
-                            <option value="2">2</option>
-                            <option value="3" selected>3</option>
-                            <option value="4">4</option>
-                            <option value="5">5 (Very Similar)</option>
-                        </select>
-                    </div>
+                    <input type="text" class="group-title" placeholder="그룹 ${groupCounter} 명칭">
+                    <button class="delete-group-btn">그룹 삭제</button>
                 </div>
                 <div class="statement-list"></div>
             `;
             groupsContainer.appendChild(groupDiv);
         }
 
-        addGroupBtn.addEventListener('click', createGroup);
-
-        // --- EXPORT TO EXCEL ---
         function exportToExcel() {
-            const groupsData = [];
+            // --- ALL VALIDATIONS ARE HERE ---
+            const requiredFields = [
+                { id: 'name', label: 'Name' }, { id: 'affiliation', label: 'Affiliation' },
+                { id: 'service-duration', label: 'Years at current institution' }, { id: 'birth-year', label: 'Birth Year' },
+                { id: 'contact', label: 'Contact' }, { id: 'position', label: 'Position' }, { id: 'major', label: 'University Major' }
+            ];
+            for (const field of requiredFields) {
+                const inputElement = document.getElementById(field.id);
+                if (!inputElement.value.trim()) {
+                    alert(`'${field.label}' 항목을 입력해주세요. 모든 참가자 정보는 필수입니다.`);
+                    inputElement.focus();
+                    return;
+                }
+            }
+            if (statementPool.querySelectorAll('.statement').length > 0) {
+                alert('아직 분류되지 않은 진술문이 남아있습니다. 모든 진술문을 그룹에 포함시켜주세요.');
+                return;
+            }
+            
             const groups = document.querySelectorAll('.group');
+            if (groups.length === 0) {
+                alert('하나 이상의 그룹을 만들어주세요.');
+                return;
+            }
+
+            for (const group of groups) {
+                const title = group.querySelector('.group-title').value.trim();
+                if (!title) {
+                    alert('제목이 비어있는 그룹이 있습니다. 모든 그룹의 제목을 입력해주세요.');
+                    group.querySelector('.group-title').focus();
+                    return;
+                }
+                const statementsInGroup = group.querySelectorAll('.statement');
+                // --- MODIFIED --- Changed validation from < 1 to < 2 to match instructions
+                if (statementsInGroup.length < 2) {
+                    alert(`'${title}' 그룹에 진술문이 충분하지 않습니다. 모든 그룹은 최소 2개 이상의 진술문으로 구성해야 합니다.`);
+                    return;
+                }
+                for (const stmt of statementsInGroup) {
+                    const importanceSelect = stmt.querySelector('.statement-controls select');
+                    if (!importanceSelect.value) {
+                        alert(`'${title}' 그룹의 진술문 중 중요도가 선택되지 않은 항목이 있습니다.`);
+                        return;
+                    }
+                }
+            }
+            // --- END VALIDATIONS ---
+
+            const groupsData = [];
             groups.forEach(group => {
-                const title = group.querySelector('.group-title').value || 'Untitled Group';
-                const similarity = group.querySelector('.similarity-select').value;
+                const title = group.querySelector('.group-title').value;
+                // --- REMOVED --- The line causing the error
+                // const similarity = group.querySelector('.similarity-select').value;
                 const statementsInGroup = group.querySelectorAll('.statement');
                 
                 statementsInGroup.forEach(stmt => {
                     const statementId = stmt.dataset.id;
                     const statementText = stmt.querySelector('.statement-text').innerText;
-                    const importance = stmt.querySelector('.importance-select').value;
+                    const importance = stmt.querySelector('.statement-controls select').value;
+                    
+                    // --- MODIFIED --- Removed the non-existent 'Group Similarity Rating'
                     groupsData.push({
                         'Group Title': title,
-                        'Group Similarity': similarity,
-                        'Statement ID': statementId,
-                        'Statement Text': statementText,
-                        'Importance in Group': importance
+                        'Statement ID': statementId, 'Statement Text': statementText,
+                        'Statement Importance': importance
                     });
                 });
             });
 
-            const participantInfo = {
-                'Name': document.getElementById('name').value,
-                'Affiliation': document.getElementById('affiliation').value,
-                'Years at Institution': document.getElementById('service-duration').value,
-                'Birth Year': document.getElementById('birth-year').value,
-                'Contact': document.getElementById('contact').value,
-                'Position': document.getElementById('position').value,
-                'Major': document.getElementById('major').value,
-            };
+            const participantInfo = {'성명': document.getElementById('name').value, '소속기관명': document.getElementById('affiliation').value, '현기관에서의 근무 기간': document.getElementById('service-duration').value, '생년월일': document.getElementById('birth-year').value, '연락처(휴대전화)': document.getElementById('contact').value, 'Position': document.getElementById('position').value, '전공 분야': document.getElementById('major').value};
             const participantData = [participantInfo];
 
             const wb = XLSX.utils.book_new();
             const wsGroups = XLSX.utils.json_to_sheet(groupsData);
             const wsParticipant = XLSX.utils.json_to_sheet(participantData);
-
             XLSX.utils.book_append_sheet(wb, wsGroups, "Grouped Statements");
-            XLSX.utils.book_append_sheet(wb, wsParticipant, "Participant Information");
-
+            XLSX.utils.book_append_sheet(wb, wsParticipant, "참여자 정보");
             XLSX.writeFile(wb, "ConceptMapping_Results.xlsx");
         }
 
+        // --- EVENT LISTENERS ---
+        addGroupBtn.addEventListener('click', createGroup);
         exportBtn.addEventListener('click', exportToExcel);
 
-        // --- INITIAL RENDER ---
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                const statement = e.target.closest('.statement');
+                if (statement) {
+                    const statementId = statement.dataset.id;
+                    const placeholder = document.getElementById(`placeholder-${statementId}`);
+                    removeStatementControls(statement);
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                        placeholder.replaceWith(statement);
+                    } else {
+                        statementPool.appendChild(statement);
+                    }
+                }
+            }
+            
+            if (e.target.classList.contains('delete-group-btn')) {
+                const groupToDelete = e.target.closest('.group');
+                if (groupToDelete) {
+                    const statementsToMove = groupToDelete.querySelectorAll('.statement');
+                    statementsToMove.forEach(statement => {
+                        removeStatementControls(statement);
+                        statementPool.appendChild(statement); 
+                    });
+                    groupToDelete.remove();
+                }
+            }
+        });
+
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('statement')) {
+                draggedItem = e.target;
+                const placeholder = document.getElementById(`placeholder-${draggedItem.dataset.id}`);
+                if(placeholder) placeholder.style.display = 'block';
+                setTimeout(() => { e.target.style.display = 'none'; }, 0);
+            }
+        });
+
+        document.addEventListener('dragend', (e) => {
+            if (draggedItem) {
+                const placeholder = document.getElementById(`placeholder-${draggedItem.dataset.id}`);
+                if(placeholder) placeholder.style.display = 'none';
+                setTimeout(() => { draggedItem.style.display = 'flex'; draggedItem = null; }, 0);
+            }
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.statement-list, #statement-pool');
+            if (dropTarget) { dropTarget.classList.add('drag-over'); }
+        });
+        
+        document.addEventListener('dragleave', (e) => {
+            const dropTarget = e.target.closest('.statement-list, #statement-pool');
+            if (dropTarget) { dropTarget.classList.remove('drag-over'); }
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.statement-list');
+            if (dropTarget && draggedItem) {
+                if (dropTarget.querySelectorAll('.statement').length >= 15) {
+                    alert('한 그룹에는 15개의 진술문만 포함할 수 있습니다.');
+                    dropTarget.classList.remove('drag-over');
+                    return;
+                }
+
+                dropTarget.appendChild(draggedItem);
+                dropTarget.classList.remove('drag-over');
+                addStatementControls(draggedItem);
+            } else {
+                const otherDropTarget = e.target.closest('#statement-pool');
+                if(otherDropTarget) otherDropTarget.classList.remove('drag-over');
+            }
+        });
+
+        // --- INITIALIZATION ---
         renderStatements();
     </script>
 </body>
