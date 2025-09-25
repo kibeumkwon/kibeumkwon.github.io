@@ -1,13 +1,395 @@
-<!-- index.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>웹 호스팅</title>
+    <title>Concept Mapping and Card Sorting Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            overflow: hidden;
+        }
+        .instructions {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        #statement-pool, #groups-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            min-height: 400px;
+        }
+        #statement-pool {
+            width: 30%;
+        }
+        #groups-container {
+            width: 70%;
+        }
+        .statement {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .grouped-statement .statement-text {
+            cursor: pointer;
+        }
+        .grouped-statement .statement-text:hover {
+            text-decoration: line-through;
+        }
+        .group {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .group-title {
+            width: 60%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .similarity-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .statement-list {
+            min-height: 50px;
+            background: #e9e9e9;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .importance-rating {
+            margin-left: 15px;
+            font-size: 0.9em;
+        }
+        .dragging {
+            opacity: 0.5;
+        }
+        .drag-over {
+            background: #d4edda;
+        }
+        #add-group-btn, #export-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #export-btn {
+            background: #28a745;
+            margin-top: 20px;
+        }
+        .participant-form {
+            background: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .form-grid label {
+            font-weight: bold;
+        }
+        .form-grid input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+    </style>
 </head>
 <body>
-    git pages 입니다.
+
+    <div class="container">
+        <div class="instructions">
+            <h2>Concept Mapping Task</h2>
+            <p>Drag statements from the "Statement Pool" into groups on the right. For each statement in a group, please rate its importance within that group. To remove a statement from a group, simply click on its text.</p>
+        </div>
+
+        <div class="main-content">
+            <div id="statement-pool">
+                <h3>Statement Pool</h3>
+                </div>
+            <div id="groups-container">
+                <h3>Your Groups</h3>
+                <button id="add-group-btn">Add New Group</button>
+            </div>
+        </div>
+
+        <div class="participant-form">
+            <h3>Participant Information</h3>
+            <div class="form-grid">
+                <div>
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name">
+                </div>
+                <div>
+                    <label for="affiliation">Affiliation:</label>
+                    <input type="text" id="affiliation" name="affiliation">
+                </div>
+                <div>
+                    <label for="service-duration">Years at current institution:</label>
+                    <input type="text" id="service-duration" name="service-duration">
+                </div>
+                <div>
+                    <label for="birth-year">Birth Year:</label>
+                    <input type="number" id="birth-year" name="birth-year">
+                </div>
+                 <div>
+                    <label for="contact">Contact:</label>
+                    <input type="text" id="contact" name="contact">
+                </div>
+                <div>
+                    <label for="position">Position:</label>
+                    <input type="text" id="position" name="position">
+                </div>
+                 <div>
+                    <label for="major">University Major:</label>
+                    <input type="text" id="major" name="major">
+                </div>
+            </div>
+        </div>
+        
+        <button id="export-btn">Export Results to Excel</button>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const statements = [
+            { id: 1, text: "Statement 1: The city should provide more accessible healthcare services." },
+            { id: 2, text: "Statement 2: Technology integration in health monitoring is crucial." },
+            { id: 3, text: "Statement 3: Green spaces and parks contribute to mental well-being." },
+            { id: 4, text: "Statement 4: Health education programs in schools are important." },
+            { id: 5, text: "Statement 5: Affordable healthy food options should be available to everyone." },
+            { id: 6, text: "Statement 6: A robust public transportation system can encourage physical activity." },
+            { id: 7, text: "Statement 7: Community gardens promote both nutrition and social interaction." },
+            { id: 8, text: "Statement 8: Wearable devices can help in early detection of health issues." },
+            { id: 9, text: "Statement 9: Mental health support needs to be destigmatized and accessible." },
+            { id: 10, text: "Statement 10: The local government should partner with private tech companies for health solutions." }
+        ];
+
+        // --- INITIALIZATION ---
+        const statementPool = document.getElementById('statement-pool');
+        const groupsContainer = document.getElementById('groups-container');
+        const addGroupBtn = document.getElementById('add-group-btn');
+        const exportBtn = document.getElementById('export-btn');
+        let groupCounter = 0;
+
+        function renderStatements() {
+            statements.forEach(statement => {
+                const div = document.createElement('div');
+                div.className = 'statement';
+                div.draggable = true;
+                div.id = `statement-${statement.id}`;
+                div.dataset.id = statement.id;
+                div.innerHTML = `<span class="statement-text">${statement.text}</span>`;
+                statementPool.appendChild(div);
+            });
+        }
+        
+        function addImportanceRating(statementElement) {
+            const existingRating = statementElement.querySelector('.importance-rating');
+            if (!existingRating) {
+                const ratingDiv = document.createElement('div');
+                ratingDiv.className = 'importance-rating';
+                ratingDiv.innerHTML = `
+                    <select class="importance-select">
+                        <option value="1">1 (Very Unimportant)</option>
+                        <option value="2">2 (Unimportant)</option>
+                        <option value="3" selected>3 (Neutral)</option>
+                        <option value="4">4 (Important)</option>
+                        <option value="5">5 (Very Important)</option>
+                    </select>
+                `;
+                statementElement.appendChild(ratingDiv);
+                statementElement.classList.add('grouped-statement');
+            }
+        }
+
+        function removeImportanceRating(statementElement) {
+            const ratingDiv = statementElement.querySelector('.importance-rating');
+            if (ratingDiv) {
+                statementElement.removeChild(ratingDiv);
+                statementElement.classList.remove('grouped-statement');
+            }
+        }
+
+
+        // --- EVENT LISTENERS ---
+        let draggedItem = null;
+
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('statement')) {
+                draggedItem = e.target;
+                setTimeout(() => {
+                    e.target.style.display = 'none';
+                }, 0);
+            }
+        });
+
+        document.addEventListener('dragend', (e) => {
+            if (draggedItem) {
+                setTimeout(() => {
+                    draggedItem.style.display = 'flex';
+                    draggedItem = null;
+                }, 0);
+            }
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.statement-list, #statement-pool');
+             if (dropTarget) {
+                dropTarget.classList.add('drag-over');
+            }
+        });
+        
+        document.addEventListener('dragleave', (e) => {
+            const dropTarget = e.target.closest('.statement-list, #statement-pool');
+             if (dropTarget) {
+                dropTarget.classList.remove('drag-over');
+            }
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const dropTarget = e.target.closest('.statement-list, #statement-pool');
+            if (dropTarget && draggedItem) {
+                dropTarget.appendChild(draggedItem);
+                dropTarget.classList.remove('drag-over');
+
+                if (dropTarget.classList.contains('statement-list')) {
+                    addImportanceRating(draggedItem);
+                } else if (dropTarget.id === 'statement-pool') {
+                    removeImportanceRating(draggedItem);
+                }
+            }
+        });
+        
+        // New listener for removing statements from a group
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('statement-text')) {
+                const statementElement = e.target.closest('.statement');
+                if (statementElement && statementElement.closest('.statement-list')) {
+                    removeImportanceRating(statementElement);
+                    statementPool.appendChild(statementElement);
+                }
+            }
+        });
+
+        // --- GROUP MANAGEMENT ---
+        function createGroup() {
+            groupCounter++;
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group';
+            groupDiv.id = `group-${groupCounter}`;
+            groupDiv.innerHTML = `
+                <div class="group-header">
+                    <input type="text" class="group-title" placeholder="Group ${groupCounter} Title">
+                    <div class="similarity-rating">
+                        <span>Similarity:</span>
+                        <select class="similarity-select">
+                            <option value="1">1 (Not Similar)</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                            <option value="5">5 (Very Similar)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="statement-list"></div>
+            `;
+            groupsContainer.appendChild(groupDiv);
+        }
+
+        addGroupBtn.addEventListener('click', createGroup);
+
+        // --- EXPORT TO EXCEL ---
+        function exportToExcel() {
+            const groupsData = [];
+            const groups = document.querySelectorAll('.group');
+            groups.forEach(group => {
+                const title = group.querySelector('.group-title').value || 'Untitled Group';
+                const similarity = group.querySelector('.similarity-select').value;
+                const statementsInGroup = group.querySelectorAll('.statement');
+                
+                statementsInGroup.forEach(stmt => {
+                    const statementId = stmt.dataset.id;
+                    const statementText = stmt.querySelector('.statement-text').innerText;
+                    const importance = stmt.querySelector('.importance-select').value;
+                    groupsData.push({
+                        'Group Title': title,
+                        'Group Similarity': similarity,
+                        'Statement ID': statementId,
+                        'Statement Text': statementText,
+                        'Importance in Group': importance
+                    });
+                });
+            });
+
+            const participantInfo = {
+                'Name': document.getElementById('name').value,
+                'Affiliation': document.getElementById('affiliation').value,
+                'Years at Institution': document.getElementById('service-duration').value,
+                'Birth Year': document.getElementById('birth-year').value,
+                'Contact': document.getElementById('contact').value,
+                'Position': document.getElementById('position').value,
+                'Major': document.getElementById('major').value,
+            };
+            const participantData = [participantInfo];
+
+            const wb = XLSX.utils.book_new();
+            const wsGroups = XLSX.utils.json_to_sheet(groupsData);
+            const wsParticipant = XLSX.utils.json_to_sheet(participantData);
+
+            XLSX.utils.book_append_sheet(wb, wsGroups, "Grouped Statements");
+            XLSX.utils.book_append_sheet(wb, wsParticipant, "Participant Information");
+
+            XLSX.writeFile(wb, "ConceptMapping_Results.xlsx");
+        }
+
+        exportBtn.addEventListener('click', exportToExcel);
+
+        // --- INITIAL RENDER ---
+        renderStatements();
+    </script>
 </body>
 </html>
