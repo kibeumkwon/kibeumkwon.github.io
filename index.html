@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concept Mapping and Card Sorting Tool (v5)</title>
+    <title>Concept Mapping and Card Sorting Tool (v6)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
@@ -43,6 +43,37 @@
             text-align: center;
             color: #d9534f;
         }
+                .final-notice {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            color: #856404;
+        }
+        .email-copy-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px; /* 텍스트와 버튼 사이 간격 */
+            margin-top: 8px;
+        }
+        #copy-email-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #copy-email-btn:hover {
+            background-color: #0056b3;
+        }
         .main-content {
             display: flex;
             gap: 20px;
@@ -52,6 +83,9 @@
             padding: 20px;
             border-radius: 5px;
             min-height: 400px;
+            /* --- MODIFIED: Added max-height and overflow-y for independent scrolling --- */
+            max-height: 75vh;
+            overflow-y: auto;
         }
         #statement-pool {
             width: 30%;
@@ -172,7 +206,7 @@
 
     <div class="container">
         <div class="instructions">
-            <h2>Concept Mapping Task</h2>
+            <h2>2 단계: 진술문 유사성 분류 및 그룹 내 중요도 평정</h2>
             <p>다음 지침에 따라서, 제시한 총 51개의 진술문을 활용하여 유사한 의미를 지닌 진술문을 분류하고, 각 그룹별 제목을 정해주시면 됩니다.</p>
             
             <h4>① 유사한 진술문 분류하기</h4>
@@ -185,16 +219,25 @@
             
             <h4>② 각 그룹의 제목 정하기</h4>
             <ul>
-                <li>분류한 각 그룹을 가장 잘 설명할 수 있는 제목을 적어주세요.</li>
+                <li>분류한 각 그룹을 <strong>가장 잘 설명할 수 있는 제목</strong>을 적어주세요.</li>
             </ul>
 
             <h4>③ 중요도 평정</h4>
             <ul>
-                <li>그룹 내 해당 진술문이 얼마나 중요한지 1 ~ 5 점 척도로 평가해 주세요.</li>
+                <li>그룹 내 해당 진술문이 얼마나 중요한지 "1 ~ 5점" 척도로 평가해 주세요.</li>
+            </ul>
+
+            <h4>④ 참가자 정보 기입 후 엑셀 파일 추출</h4>
+            <ul>
+                <li>작업을 완료 하셨다면, 엑셀 파일 추출 버튼을 클릭하시여 파일을 다운로드 하시고, 아래 안내된 전자우편으로 송부 부탁드립니다.</li>
             </ul>
 
             <div class="final-notice">
-                ★ 작성을 완료하신 후, <strong>꼭</strong> 하단의 엑셀 파일 추출 버튼을 눌러서 다운 받으신 다음에 파일 공유 부탁드립니다. ★
+                <p>★ 작성을 완료하신 후, <strong>꼭</strong> 하단의 엑셀 파일 추출 버튼을 눌러서 다운 받으신 다음에 파일 공유 부탁드립니다. ★</p>
+                <div class="email-copy-container">
+                    <span>✉ 공유 해주실 전자우편: kibeum@korea.ac.kr</span>
+                    <button id="copy-email-btn">복사</button>
+                </div>
             </div>
         </div>
 
@@ -215,20 +258,20 @@
                 <div><label for="name">성명:</label><input type="text" id="name" name="name"></div>
                 <div><label for="affiliation">소속기관명:</label><input type="text" id="affiliation" name="affiliation"></div>
                 <div><label for="service-duration">현기관에서의 근무 기간:</label><input type="text" id="service-duration" name="service-duration"></div>
-                <div><label for="birth-year">생년월일:</label><input type="number" id="birth-year" name="birth-year"></div>
+                <div><label for="birth-year">생년월일:</label><input type="text" id="birth-year" name="birth-year" placeholder="YYYYMMDD"></div>
                 <div><label for="contact">연락처(휴대전화):</label><input type="text" id="contact" name="contact"></div>
                 <div><label for="position">직급:</label><input type="text" id="position" name="position"></div>
                 <div><label for="major">전공 분야:</label><input type="text" id="major" name="major"></div>
             </div>
         </div>
         
-        <button id="export-btn">엑셀파일로 추출</button>
+        <button id="export-btn">작성 완료 및 엑셀파일로 추출</button>
     </div>
 
     <script>
         // --- DATA ---
         const statements = [
-            { id: 1, text: "1. 광주동구 스마트 건강도시는 참여하는 동구 구민을 위한 것이다." }, { id: 2, text: "2. 광주동구 스마트 건강도시는 스마트 기기를 이용해 예측하고 행동할 수 있는 곳이다." }, { id: 3, text: "3. 광주동구 스마트 건강도시는 자연이 치유하는 것이다." }, { id: 4, text: "4. 광주동구 스마트 건강도시는 스마트 기술을 통한 건강혁신을 촉진하는 것이다." }, { id: 5, text: "5. 광주동구 스마트 건강도시는 AI 디지털 헬스케어를 포함하는 것이다." }, { id: 6, text: "6. 광주동구 스마트 건강도시는 ICT 기반으로 건강을 관리하는 것이다." }, { id: 7, text: "7. 광주동구 스마트 건강도시는 독거가구를 관리할 수 있는 시스템(AI 활용) (독고사, 외로움 등 예방) 이다." }, { id: 8, text: "8. 광주동구 스마트 건강도시는 도로 블랙홀 등 사전 예측으로 사고 예방 시스템(예. \"땅꺼짐이 ㅇㅇ지역에 예측되니 그 지역 지날 때는 주의를 요한다\" 등) 이다." }, { id: 9, text: "9. 광주동구 스마트 건강도시는 스마트기기에 익숙하지 않은 사람들이 사용할 수 있는 간편기기 개발해 간단한 교육으로 사용할 수 있도록 하는 것이다." }, { id: 10, text: "10. 광주동구 스마트 건강도시는 건강회복력이 풍부한 곳이다." }, { id: 11, text: "11. 광주동구 스마트 건강도시는 개인 맞춤형(가족) 이다." }, { id: 12, text: "12. 광주동구 스마트 건강도시는 사회적 접근 용이 이다." }, { id: 13, text: "13. 광주동구 스마트 건강도시는 기후, 환경, 건강의 지속가능성을 확보하는 것이다." }, { id: 14, text: "14. 광주동구 스마트 건강도시는 공동체 회복이다." }, { id: 15, text: "15. 광주동구 스마트 건강도시는 지역문화와 함께 하는 것이다." }, { id: 16, text: "16. 광주동구 스마트 건강도시는 자연과 함께 하는 것이다." }, { id: 17, text: "17. 광주동구 스마트 건강도시는 연령에 상관없이 돌봄을 제공받는 것이다." }, { id: 18, text: "18. 광주동구 스마트 건강도시는 생활에 필요영역별 시스템으로 작동되는 곳이다." }, { id: 19, text: "19. 광주동구 스마트 건강도시는 스마트와 건강을 포괄하는 개념이다." }, { id: 20, text: "20. 광주동구 스마트 건강도시는 건강으로 가는 기회이다." }, { id: 21, text: "21. 광주동구 스마트 건강도시는 도시 안에서 환경, 복지, 건강, 의료 등 생활과 밀접한 것들이 해결되는 도시이다." }, { id: 22, text: "22. 광주동구 스마트 건강도시는 시간과 장소의 제약을 받지 않는 돌봄을 포함하는 것이다." }, { id: 23, text: "23. 광주동구 스마트 건강도시는 모두가 건강을 스스로 관리할 수 있는 도시이다." }, { id: 24, text: "24. 광주동구 스마트 건강도시는 질환의 경중정도에 상관없이 돌봄을 제공하는 것이다." }, { id: 25, text: "25. 광주동구 스마트 건강도시는 질병 예방 중심 서비스이다." }, { id: 26, text: "26. 광주동구 스마트 건강도시는 소득에 상관없이 돌봄을 제공받는 것이다." }, { id: 27, text: "27. 광주동구 스마트 건강도시는 사회적 격차 최소화이다." }, { id: 28, text: "28. 광주동구 스마트 건강도시는 보건의료서비스(급성기·회복기·만성 시스템) 체계화를 통해 환자의 접근성이 향상된 도시이다." }, { id: 29, text: "29. 광주동구 스마트 건강도시는 취약계층(고령층) 중심 공간환경이 조성된 곳이다." }, { id: 30, text: "30. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 도시이다." }, { id: 31, text: "31. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 곳이다." }, { id: 32, text: "32. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 33, text: "33. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 34, text: "34. 광주동구 스마트 건강도시는 교통의 연결성과 접근성이 좋은 곳이다." }, { id: 35, text: "35. 광주동구 스마트 건강도시는 지역사회가 가진 물리적 자원과 돌봄제도를 유기적으로 연결하는 곳이다." }, { id: 36, text: "36. 광주동구 스마트 건강도시는 복지 제도의 중복 없이 빈틈을 채워나가는 도시이다." }, { id: 37, text: "37. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 38, text: "38. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 39, text: "39. 광주동구 스마트 건강도시는 실천 가능한 전략을 중시하며 발전하는 것이다." }, { id: 40, text: "40. 광주동구 스마트 건강도시는 기후위기에 대응해 재해 예방과 주민 안전을 최우선적으로 고려하며, 회복력 있는 물리적 환경을 구축하는 곳이다." }, { id: 41, text: "41. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 42, text: "42. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 43, text: "43. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 44, text: "44. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 45, text: "45. 광주동구 스마트 건강도시는 가정 내 환경과 돌봄 여건을 보완해 안전한 재가생활이 가능한 도시이다." }, { id: 46, text: "46. 광주동구 스마트 건강도시는 고령층 등 디지털 취약계층을 위해 디지털 기술의 진입장벽이 최소화된 공간이다." }, { id: 47, text: "47. 광주동구 스마트 건강도시는 민간기업이 손쉽게 참여하고 협력할 수 있는 공공 시스템이 구축된 도시이다." }, { id: 48, text: "48. 광주동구 스마트 건강도시는 건강 복합적인 영역을 고려하여 주민 건강을 지키는 친환경적 공간이다." }, { id: 49, text: "49. 광주동구 스마트 건강도시는 기후 적응 인프라 확충을 통해 건강을 통합적으로 고려하는 도시이다." }, { id: 50, text: "50. 광주동구 스마트 건강도시는 이용자 중심 맞춤형 교통 복지를 실현하는 체계이다." }, { id: 51, text: "51. 광주동구 스마트 건강도시는 예산 문제 등 어려움을 극복하며 건강도시 사업의 연결성이 유지되는 도시이다." }
+            { id: 1, text: "1. 광주동구 스마트 건강도시는 참여하는 동구 구민을 위한 것이다." }, { id: 2, text: "2. 광주동구 스마트 건강도시는 스마트 기기를 이용해 예측하고 행동할 수 있는 곳이다." }, { id: 3, text: "3. 광주동구 스마트 건강도시는 자연이 치유하는 것이다." }, { id: 4, text: "4. 광주동구 스마트 건강도시는 스마트 기술을 통한 건강혁신을 촉진하는 것이다." }, { id: 5, text: "5. 광주동구 스마트 건강도시는 AI(인공지능) 디지털 헬스케어를 포함하는 것이다." }, { id: 6, text: "6. 광주동구 스마트 건강도시는 ICT(정보통신기술) 기반으로 건강을 관리하는 것이다." }, { id: 7, text: "7. 광주동구 스마트 건강도시는 독거가구를 관리할 수 있는 시스템(AI 활용) (고독사, 외로움 등 예방) 이다." }, { id: 8, text: "8. 광주동구 스마트 건강도시는 도로 블랙홀 등 사전 예측으로 사고 예방 시스템(예. \"땅꺼짐이 ㅇㅇ지역에 예측되니 그 지역 지날 때는 주의를 요한다\" 등) 이다." }, { id: 9, text: "9. 광주동구 스마트 건강도시는 스마트기기에 익숙하지 않은 사람들이 사용할 수 있는 간편기기 개발해 간단한 교육으로 사용할 수 있도록 하는 것이다." }, { id: 10, text: "10. 광주동구 스마트 건강도시는 건강회복력이 풍부한 곳이다." }, { id: 11, text: "11. 광주동구 스마트 건강도시는 개인(가족) 맞춤형이다." }, { id: 12, text: "12. 광주동구 스마트 건강도시는 사회적 접근성이 용이한 곳이다." }, { id: 13, text: "13. 광주동구 스마트 건강도시는 기후, 환경, 건강의 지속가능성을 확보하는 것이다." }, { id: 14, text: "14. 광주동구 스마트 건강도시는 공동체 회복이다." }, { id: 15, text: "15. 광주동구 스마트 건강도시는 지역문화와 함께 하는 것이다." }, { id: 16, text: "16. 광주동구 스마트 건강도시는 자연과 함께 하는 것이다." }, { id: 17, text: "17. 광주동구 스마트 건강도시는 연령에 상관없이 돌봄을 제공받는 것이다." }, { id: 18, text: "18. 광주동구 스마트 건강도시는 생활에 필요영역별 시스템으로 작동되는 곳이다." }, { id: 19, text: "19. 광주동구 스마트 건강도시는 스마트와 건강을 포괄하는 개념이다." }, { id: 20, text: "20. 광주동구 스마트 건강도시는 건강으로 가는 기회이다." }, { id: 21, text: "21. 광주동구 스마트 건강도시는 도시 안에서 환경, 복지, 건강, 의료 등 생활과 밀접한 것들이 해결되는 도시이다." }, { id: 22, text: "22. 광주동구 스마트 건강도시는 시간과 장소의 제약을 받지 않는 돌봄을 포함하는 것이다." }, { id: 23, text: "23. 광주동구 스마트 건강도시는 모두가 건강을 스스로 관리할 수 있는 도시이다." }, { id: 24, text: "24. 광주동구 스마트 건강도시는 질환의 경중정도에 상관없이 돌봄을 제공하는 것이다." }, { id: 25, text: "25. 광주동구 스마트 건강도시는 질병 예방 중심 서비스이다." }, { id: 26, text: "26. 광주동구 스마트 건강도시는 소득에 상관없이 돌봄을 제공받는 것이다." }, { id: 27, text: "27. 광주동구 스마트 건강도시는 사회적 격차 최소화이다." }, { id: 28, text: "28. 광주동구 스마트 건강도시는 보건의료서비스(급성기·회복기·만성 시스템) 체계화를 통해 환자의 접근성이 향상된 도시이다." }, { id: 29, text: "29. 광주동구 스마트 건강도시는 취약계층(고령층) 중심 공간환경이 조성된 곳이다." }, { id: 30, text: "30. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 도시이다." }, { id: 31, text: "31. 광주동구 스마트 건강도시는 국립공원 기반의 자연 녹지와 건강 연계성이 강화된 곳이다." }, { id: 32, text: "32. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 33, text: "33. 광주동구 스마트 건강도시는 주민 생활권과 보행 활동 동선이 보장된 곳이다." }, { id: 34, text: "34. 광주동구 스마트 건강도시는 교통의 연결성과 접근성이 좋은 곳이다." }, { id: 35, text: "35. 광주동구 스마트 건강도시는 지역사회가 가진 물리적 자원과 돌봄제도를 유기적으로 연결하는 곳이다." }, { id: 36, text: "36. 광주동구 스마트 건강도시는 복지 제도의 중복 없이 빈틈을 채워나가는 도시이다." }, { id: 37, text: "37. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 38, text: "38. 광주동구 스마트 건강도시는 주민 건강 증진을 위한 보행 친화적 공간 조성을 중시하는 도시이다." }, { id: 39, text: "39. 광주동구 스마트 건강도시는 실천 가능한 전략을 중시하며 발전하는 것이다." }, { id: 40, text: "40. 광주동구 스마트 건강도시는 기후위기에 대응해 재해 예방과 주민 안전을 최우선적으로 고려하며, 회복력 있는 물리적 환경을 구축하는 곳이다." }, { id: 41, text: "41. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 42, text: "42. 광주동구 스마트 건강도시는 스마트 기술의 적용 범위를 명확히 설정하고. 디지털 포용을 우선하는 공간이다." }, { id: 43, text: "43. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 44, text: "44. 광주동구 스마트 건강도시는 배리어 프리 환경을 조성하여 소외된 사람이 없는 포용적 건강 환경이다." }, { id: 45, text: "45. 광주동구 스마트 건강도시는 가정 내 환경과 돌봄 여건을 보완해 안전한 재가생활이 가능한 도시이다." }, { id: 46, text: "46. 광주동구 스마트 건강도시는 고령층 등 디지털 취약계층을 위해 디지털 기술의 진입장벽이 최소화된 공간이다." }, { id: 47, text: "47. 광주동구 스마트 건강도시는 민간기업이 손쉽게 참여하고 협력할 수 있는 공공 시스템이 구축된 도시이다." }, { id: 48, text: "48. 광주동구 스마트 건강도시는 건강 복합적인 영역을 고려하여 주민 건강을 지키는 친환경적 공간이다." }, { id: 49, text: "49. 광주동구 스마트 건강도시는 기후 적응 인프라 확충을 통해 건강을 통합적으로 고려하는 도시이다." }, { id: 50, text: "50. 광주동구 스마트 건강도시는 이용자 중심 맞춤형 교통 복지를 실현하는 체계이다." }, { id: 51, text: "51. 광주동구 스마트 건강도시는 예산 문제 등 어려움을 극복하며 건강도시 사업의 연결성이 유지되는 도시이다." }
         ];
 
         // --- ELEMENTS ---
@@ -300,9 +343,9 @@
         function exportToExcel() {
             // --- ALL VALIDATIONS ARE HERE ---
             const requiredFields = [
-                { id: 'name', label: 'Name' }, { id: 'affiliation', label: 'Affiliation' },
-                { id: 'service-duration', label: 'Years at current institution' }, { id: 'birth-year', label: 'Birth Year' },
-                { id: 'contact', label: 'Contact' }, { id: 'position', label: 'Position' }, { id: 'major', label: 'University Major' }
+                { id: 'name', label: '성명' }, { id: 'affiliation', label: '소속기관명' },
+                { id: 'service-duration', label: '현기관에서의 근무 기간' }, { id: 'birth-year', label: '생년월일' },
+                { id: 'contact', label: '연락처(휴대전화)' }, { id: 'position', label: '직급' }, { id: 'major', label: '전공 분야' }
             ];
             for (const field of requiredFields) {
                 const inputElement = document.getElementById(field.id);
@@ -331,7 +374,6 @@
                     return;
                 }
                 const statementsInGroup = group.querySelectorAll('.statement');
-                // --- MODIFIED --- Changed validation from < 1 to < 2 to match instructions
                 if (statementsInGroup.length < 2) {
                     alert(`'${title}' 그룹에 진술문이 충분하지 않습니다. 모든 그룹은 최소 2개 이상의 진술문으로 구성해야 합니다.`);
                     return;
@@ -349,8 +391,6 @@
             const groupsData = [];
             groups.forEach(group => {
                 const title = group.querySelector('.group-title').value;
-                // --- REMOVED --- The line causing the error
-                // const similarity = group.querySelector('.similarity-select').value;
                 const statementsInGroup = group.querySelectorAll('.statement');
                 
                 statementsInGroup.forEach(stmt => {
@@ -358,16 +398,16 @@
                     const statementText = stmt.querySelector('.statement-text').innerText;
                     const importance = stmt.querySelector('.statement-controls select').value;
                     
-                    // --- MODIFIED --- Removed the non-existent 'Group Similarity Rating'
                     groupsData.push({
                         'Group Title': title,
-                        'Statement ID': statementId, 'Statement Text': statementText,
+                        'Statement ID': statementId, 
+                        'Statement Text': statementText,
                         'Statement Importance': importance
                     });
                 });
             });
 
-            const participantInfo = {'성명': document.getElementById('name').value, '소속기관명': document.getElementById('affiliation').value, '현기관에서의 근무 기간': document.getElementById('service-duration').value, '생년월일': document.getElementById('birth-year').value, '연락처(휴대전화)': document.getElementById('contact').value, 'Position': document.getElementById('position').value, '전공 분야': document.getElementById('major').value};
+            const participantInfo = {'성명': document.getElementById('name').value, '소속기관명': document.getElementById('affiliation').value, '현기관에서의 근무 기간': document.getElementById('service-duration').value, '생년월일': document.getElementById('birth-year').value, '연락처(휴대전화)': document.getElementById('contact').value, '직급': document.getElementById('position').value, '전공 분야': document.getElementById('major').value};
             const participantData = [participantInfo];
 
             const wb = XLSX.utils.book_new();
@@ -376,6 +416,8 @@
             XLSX.utils.book_append_sheet(wb, wsGroups, "Grouped Statements");
             XLSX.utils.book_append_sheet(wb, wsParticipant, "참여자 정보");
             XLSX.writeFile(wb, "ConceptMapping_Results.xlsx");
+
+            alert("수고 많으셨습니다!");
         }
 
         // --- EVENT LISTENERS ---
@@ -383,21 +425,16 @@
         exportBtn.addEventListener('click', exportToExcel);
 
         document.addEventListener('click', (e) => {
+            // Statement remove button
             if (e.target.classList.contains('remove-btn')) {
                 const statement = e.target.closest('.statement');
                 if (statement) {
-                    const statementId = statement.dataset.id;
-                    const placeholder = document.getElementById(`placeholder-${statementId}`);
                     removeStatementControls(statement);
-                    if (placeholder) {
-                        placeholder.style.display = 'none';
-                        placeholder.replaceWith(statement);
-                    } else {
-                        statementPool.appendChild(statement);
-                    }
+                    statementPool.appendChild(statement);
                 }
             }
             
+            // Group delete button
             if (e.target.classList.contains('delete-group-btn')) {
                 const groupToDelete = e.target.closest('.group');
                 if (groupToDelete) {
@@ -414,17 +451,16 @@
         document.addEventListener('dragstart', (e) => {
             if (e.target.classList.contains('statement')) {
                 draggedItem = e.target;
-                const placeholder = document.getElementById(`placeholder-${draggedItem.dataset.id}`);
-                if(placeholder) placeholder.style.display = 'block';
                 setTimeout(() => { e.target.style.display = 'none'; }, 0);
             }
         });
 
         document.addEventListener('dragend', (e) => {
             if (draggedItem) {
-                const placeholder = document.getElementById(`placeholder-${draggedItem.dataset.id}`);
-                if(placeholder) placeholder.style.display = 'none';
-                setTimeout(() => { draggedItem.style.display = 'flex'; draggedItem = null; }, 0);
+                setTimeout(() => { 
+                    draggedItem.style.display = 'flex'; 
+                    draggedItem = null; 
+                }, 0);
             }
         });
 
@@ -441,21 +477,44 @@
 
         document.addEventListener('drop', (e) => {
             e.preventDefault();
-            const dropTarget = e.target.closest('.statement-list');
-            if (dropTarget && draggedItem) {
-                if (dropTarget.querySelectorAll('.statement').length >= 15) {
-                    alert('한 그룹에는 15개의 진술문만 포함할 수 있습니다.');
-                    dropTarget.classList.remove('drag-over');
+            const dropTargetList = e.target.closest('.statement-list');
+            const dropTargetPool = e.target.closest('#statement-pool');
+            
+            e.target.closest('.drag-over')?.classList.remove('drag-over');
+
+            if (dropTargetList && draggedItem) {
+                if (dropTargetList.querySelectorAll('.statement').length >= 15) {
+                    alert('한 그룹에는 16개 이상의 진술문을 포함할 수 없습니다.');
                     return;
                 }
-
-                dropTarget.appendChild(draggedItem);
-                dropTarget.classList.remove('drag-over');
+                dropTargetList.appendChild(draggedItem);
                 addStatementControls(draggedItem);
-            } else {
-                const otherDropTarget = e.target.closest('#statement-pool');
-                if(otherDropTarget) otherDropTarget.classList.remove('drag-over');
+
+            } else if (dropTargetPool && draggedItem) {
+                removeStatementControls(draggedItem);
+                dropTargetPool.appendChild(draggedItem);
             }
+        });
+                // 이메일 복사 버튼 이벤트 리스너
+        const copyBtn = document.getElementById('copy-email-btn');
+        copyBtn.addEventListener('click', () => {
+            const email = 'kibeum@korea.ac.kr';
+    
+            navigator.clipboard.writeText(email).then(() => {
+                // 성공 시 버튼 텍스트 변경
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = '복사 완료!';
+                copyBtn.disabled = true;
+
+                // 2초 후에 원래대로 복귀
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                alert('이메일 복사에 실패했습니다.');
+            });
         });
 
         // --- INITIALIZATION ---
