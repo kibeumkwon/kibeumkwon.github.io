@@ -231,7 +231,7 @@
                 <li>그룹 내에서 해당 진술문이 얼마나 중요한지 1 ~ 5점 척도로 평가해 주세요.</li>
             </ul>
 
-            <h4>④ 참가자 정보 기입 후 파일 추출</h4>
+            <h4>④ 참가자 정보 기입 후 엑셀 파일 추출</h4>
             <ul>
                 <li>작업을 완료하신 후, 파일 추출 버튼을 클릭하여 2개 파일(엑셀, 이미지)을 다운로드하시고, 아래 안내된 전자우편으로 송부해 주시기 바랍니다.</li>
             </ul>
@@ -400,103 +400,138 @@
             `;
             groupsContainer.appendChild(groupDiv);
         }
-
+        
         function exportToExcel() {
-            // --- ALL VALIDATIONS ARE HERE ---
-            const requiredFields = [
-                { id: 'name', label: '성명' }, { id: 'affiliation', label: '소속기관명' },
-                { id: 'service-duration', label: '현기관에서의 근무 기간' }, { id: 'birth-year', label: '생년월일' },
-                { id: 'contact', label: '연락처(휴대전화)' }, { id: 'position', label: '직급' }, { id: 'major', label: '전공 분야' }
-            ];
-            for (const field of requiredFields) {
-                const inputElement = document.getElementById(field.id);
-                if (!inputElement.value.trim()) {
-                    alert(`'${field.label}' 항목을 입력해주세요. 모든 참가자 정보는 필수입니다.`);
-                    inputElement.focus();
-                    return;
-                }
-            }
-            if (statementPool.querySelectorAll('.statement').length > 0) {
-                alert('아직 분류되지 않은 진술문이 남아있습니다. 모든 진술문을 그룹에 포함시켜주세요.');
-                return;
-            }
+            // --- ALL VALIDATIONS ARE HERE ---
+            const requiredFields = [
+                { id: 'name', label: '성명' }, { id: 'affiliation', label: '소속기관명' },
+                { id: 'service-duration', label: '현기관에서의 근무 기간' }, { id: 'birth-year', label: '생년월일' },
+                { id: 'contact', label: '연락처(휴대전화)' }, { id: 'position', label: '직급' }, { id: 'major', label: '전공 분야' }
+            ];
+            for (const field of requiredFields) {
+                const inputElement = document.getElementById(field.id);
+                if (!inputElement.value.trim()) {
+                    alert(`'${field.label}' 항목을 입력해주세요. 모든 참가자 정보는 필수입니다.`);
+                    inputElement.focus();
+                    return;
+                }
+            }
+            if (statementPool.querySelectorAll('.statement').length > 0) {
+                alert('아직 분류되지 않은 진술문이 남아있습니다. 모든 진술문을 그룹에 포함시켜주세요.');
+                return;
+            }
+            
+            const groups = document.querySelectorAll('.group');
+            if (groups.length === 0) {
+                alert('하나 이상의 그룹을 만들어주세요.');
+                return;
+            }
+
+            for (const group of groups) {
+                const title = group.querySelector('.group-title').value.trim();
+                if (!title) {
+                    alert('제목이 비어있는 그룹이 있습니다. 모든 그룹의 제목을 입력해주세요.');
+                    group.querySelector('.group-title').focus();
+                    return;
+                }
+                const statementsInGroup = group.querySelectorAll('.statement');
+              if (statementsInGroup.length < 2) {
+                  alert(`'${title}' 그룹에 진술문이 충분하지 않습니다. 모든 그룹은 최소 2개 이상의 진술문으로 구성해야 합니다.`);
+                  return;
+              }
+              if (statementsInGroup.length > 18) {
+                  alert(`'${title}' 그룹의 진술문이 너무 많습니다. 한 그룹에는 19개 이상의 진술문을 포함할 수 없습니다.`);
+                  return;
+              }
+                for (const stmt of statementsInGroup) {
+                    const importanceSelect = stmt.querySelector('.statement-controls select');
+                    if (!importanceSelect.value) {
+                        alert(`'${title}' 그룹의 진술문 중 중요도가 선택되지 않은 항목이 있습니다.`);
+                        return;
+                    }
+                }
+            }
+            // --- END VALIDATIONS ---
+
+            alert("이제 결과 파일을 다운로드합니다. 잠시만 기다려주세요.");
+
+            const participantName = document.getElementById('name').value.trim() || 'participant';
+            const captureArea = document.querySelector('.main-content'); // 캡처할 영역을 main-content로 변경
+
+            // ▼▼▼ 스크롤 영역 스타일 임시 변경 ▼▼▼
+            const poolEl = document.getElementById('statement-pool');
+            const groupsEl = document.getElementById('groups-container');
             
-            const groups = document.querySelectorAll('.group');
-            if (groups.length === 0) {
-                alert('하나 이상의 그룹을 만들어주세요.');
-                return;
-            }
+            // 기존 스타일 저장
+            const originalPoolStyle = { maxHeight: poolEl.style.maxHeight, overflowY: poolEl.style.overflowY };
+            const originalGroupsStyle = { maxHeight: groupsEl.style.maxHeight, overflowY: groupsEl.style.overflowY };
 
-            for (const group of groups) {
-                const title = group.querySelector('.group-title').value.trim();
-                if (!title) {
-                    alert('제목이 비어있는 그룹이 있습니다. 모든 그룹의 제목을 입력해주세요.');
-                    group.querySelector('.group-title').focus();
-                    return;
-                }
-                const statementsInGroup = group.querySelectorAll('.statement');
-                // --- 참고: 기존 코드에서는 2개였으나, 지침서에는 '최소 1개'이므로 1개로 수정합니다. 필요시 '< 2'로 다시 변경하세요. ---
-                if (statementsInGroup.length < 1) { 
-                    alert(`'${title}' 그룹에 진술문이 없습니다. 모든 그룹은 최소 1개 이상의 진술문으로 구성해야 합니다.`);
-                    return;
-                }
-                for (const stmt of statementsInGroup) {
-                    const importanceSelect = stmt.querySelector('.statement-controls select');
-                    if (!importanceSelect.value) {
-                        alert(`'${title}' 그룹의 진술문 중 중요도가 선택되지 않은 항목이 있습니다.`);
-                        return;
-                    }
-                }
-            }
-            // --- END VALIDATIONS ---
+            // 스크롤 없애기
+            poolEl.style.maxHeight = 'none';
+            poolEl.style.overflowY = 'visible';
+            groupsEl.style.maxHeight = 'none';
+            groupsEl.style.overflowY = 'visible';
+            // ▲▲▲ 스크롤 영역 스타일 임시 변경 ▲▲▲
 
-            // 모든 유효성 검사 통과 후
-            alert("이제 결과 파일을 다운로드합니다. 잠시만 기다려주세요.");
+            html2canvas(captureArea, {
+                scrollY: -window.scrollY, // 전체 페이지를 캡처하기 위한 옵션
+                windowWidth: document.documentElement.offsetWidth,
+                windowHeight: document.documentElement.offsetHeight
+            }).then(canvas => {
+                // ▼▼▼ 스타일 복원 ▼▼▼
+                poolEl.style.maxHeight = originalPoolStyle.maxHeight;
+                poolEl.style.overflowY = originalPoolStyle.overflowY;
+                groupsEl.style.maxHeight = originalGroupsStyle.maxHeight;
+                groupsEl.style.overflowY = originalGroupsStyle.overflowY;
+                // ▲▲▲ 스타일 복원 ▲▲▲
 
-            // ▼▼▼ 이미지 캡처 및 다운로드 로직 추가 ▼▼▼
-            const participantName = document.getElementById('name').value || 'participant';
+                const imageLink = document.createElement('a');
+                imageLink.download = `${participantName}_ConceptMap_Result.png`;
+                imageLink.href = canvas.toDataURL("image/png");
+                imageLink.click();
 
-            html2canvas(document.querySelector('.container')).then(canvas => {
-                const imageLink = document.createElement('a');
-                imageLink.download = `${participantName}_ConceptMap_Result.png`;
-                imageLink.href = canvas.toDataURL("image/png");
-                imageLink.click(); // 이미지 다운로드
+                const groupsData = [];
+                document.querySelectorAll('.group').forEach(group => {
+                    const title = group.querySelector('.group-title').value;
+                    const statementsInGroup = group.querySelectorAll('.statement');
+                    
+                    statementsInGroup.forEach(stmt => {
+                        const statementId = stmt.dataset.id;
+                        const statementText = stmt.querySelector('.statement-text').innerText;
+                        const importance = stmt.querySelector('.statement-controls select').value;
+                        
+                        groupsData.push({
+                            'Group Title': title,
+                            'Statement ID': statementId, 
+                            'Statement Text': statementText,
+                            'Statement Importance': importance
+                        });
+                    });
+                });
 
-                // ▼▼▼ 기존 엑셀 생성 및 다운로드 로직을 이 안으로 이동 ▼▼▼
-                const groupsData = [];
-                groups.forEach(group => {
-                    const title = group.querySelector('.group-title').value;
-                    const statementsInGroup = group.querySelectorAll('.statement');
-                    
-                    statementsInGroup.forEach(stmt => {
-                        const statementId = stmt.dataset.id;
-                        const statementText = stmt.querySelector('.statement-text').innerText;
-                        const importance = stmt.querySelector('.statement-controls select').value;
-                        
-                        groupsData.push({
-                            'Group Title': title,
-                            'Statement ID': statementId, 
-                            'Statement Text': statementText,
-                            'Statement Importance': importance
-                        });
-                    });
-                });
+                const participantInfo = {'성명': document.getElementById('name').value, '소속기관명': document.getElementById('affiliation').value, '현기관에서의 근무 기간': document.getElementById('service-duration').value, '생년월일': document.getElementById('birth-year').value, '연락처(휴대전화)': document.getElementById('contact').value, '직급': document.getElementById('position').value, '전공 분야': document.getElementById('major').value};
+                const participantData = [participantInfo];
 
-                const participantInfo = {'성명': document.getElementById('name').value, '소속기관명': document.getElementById('affiliation').value, '현기관에서의 근무 기간': document.getElementById('service-duration').value, '생년월일': document.getElementById('birth-year').value, '연락처(휴대전화)': document.getElementById('contact').value, '직급': document.getElementById('position').value, '전공 분야': document.getElementById('major').value};
-                const participantData = [participantInfo];
+                const wb = XLSX.utils.book_new();
+                const wsGroups = XLSX.utils.json_to_sheet(groupsData);
+                const wsParticipant = XLSX.utils.json_to_sheet(participantData);
+                XLSX.utils.book_append_sheet(wb, wsGroups, "Grouped Statements");
+                XLSX.utils.book_append_sheet(wb, wsParticipant, "참여자 정보");
+                XLSX.writeFile(wb, `${participantName}_ConceptMapping_Results.xlsx`);
 
-                const wb = XLSX.utils.book_new();
-                const wsGroups = XLSX.utils.json_to_sheet(groupsData);
-                const wsParticipant = XLSX.utils.json_to_sheet(participantData);
-                XLSX.utils.book_append_sheet(wb, wsGroups, "Grouped Statements");
-                XLSX.utils.book_append_sheet(wb, wsParticipant, "참여자 정보");
-                XLSX.writeFile(wb, `${participantName}_ConceptMapping_Results.xlsx`);
-
-                setTimeout(() => {
-                    alert("수고 많으셨습니다! 다운로드된 2개의 파일(이미지, 엑셀)을 공유해주세요.");
-                }, 500);
+                setTimeout(() => {
+                    alert("수고 많으셨습니다! 다운로드된 2개의 파일(이미지, 엑셀)을 공유해주세요.");
+                }, 500);
+            }).catch(err => {
+                console.error("이미지 캡처에 실패했습니다:", err);
+                // 에러 발생 시에도 스타일은 복원
+                poolEl.style.maxHeight = originalPoolStyle.maxHeight;
+                poolEl.style.overflowY = originalPoolStyle.overflowY;
+                groupsEl.style.maxHeight = originalGroupsStyle.maxHeight;
+                groupsEl.style.overflowY = originalGroupsStyle.overflowY;
             });
-        }
+        }
+
 
         // --- EVENT LISTENERS ---
         addGroupBtn.addEventListener('click', createGroup);
